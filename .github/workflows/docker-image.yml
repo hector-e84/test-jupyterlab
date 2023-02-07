@@ -29,4 +29,25 @@ jobs:
     - name: 'Build Inventory Image'
       run: |
         docker build . --tag ghcr.io/hector-e84/jupyter-test:latest
+
+    - name: Run Trivy vulnerability scanner
+      uses: aquasecurity/trivy-action@master
+      with:
+        image-ref: 'ghcr.io/hector-e84/jupyter-test:latest'
+        format: 'template'
+        template: '@/contrib/sarif.tpl'
+        output: 'trivy-results.sarif'
+        exit-code: '1'
+        timeout: '10m0s'
+        ignore-unfixed: true
+        vuln-type: 'os,library'
+        severity: 'CRITICAL,HIGH'
+
+    - name: Upload Trivy scan results to GitHub Security tab
+      uses: github/codeql-action/upload-sarif@v2
+      with:
+        sarif_file: 'trivy-results.sarif'
+
+    - name: 'Push Inventory Image'
+      run: |
         docker push ghcr.io/hector-e84/jupyter-test:latest
